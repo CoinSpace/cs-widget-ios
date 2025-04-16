@@ -1,0 +1,4 @@
+target 'WidgetExtension' do
+  pod 'SDWebImage'
+  pod 'SDWebImageSVGNativeCoder'
+end
