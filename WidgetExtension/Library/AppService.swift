@@ -43,7 +43,7 @@ class AppService {
         let priceString = String(format: "%.8f", price)
         let fractionDigits = priceString.split(separator: ".").last?.count ?? 0
         formatter.minimumFractionDigits = 0
-        formatter.maximumFractionDigits = fractionDigits
+        formatter.maximumFractionDigits = price > 1000 ? 0 : fractionDigits
         return formatter.string(from: NSNumber(value: price)) ?? ""
     }
 }

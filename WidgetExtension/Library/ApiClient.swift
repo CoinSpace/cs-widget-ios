@@ -42,13 +42,12 @@ actor ApiClient {
         let cacheKey: NSString = url as NSString
         if let cached = cache[cacheKey] {
             switch cached {
-            case .ready(let cryptos, let timestamp):
+            case .ready(let value, let timestamp):
                 if Date().timeIntervalSince(timestamp) < ttl {
-                    return cryptos as! T
+                    return value as! T
                 } else {
                     cache[cacheKey] = nil
                 }
-                return cryptos as! T
             case .inProgress(let task):
                 return try await task.value as! T
             }
@@ -61,9 +60,9 @@ actor ApiClient {
         }
         cache[cacheKey] = .inProgress(task)
         do {
-            let cryptos = try await task.value
-            cache[cacheKey] = .ready(cryptos as! T, Date())
-            return cryptos as! T
+            let value = try await task.value
+            cache[cacheKey] = .ready(value as! T, Date())
+            return value as! T
         } catch {
             cache[cacheKey] = nil
             print("API Error", error)

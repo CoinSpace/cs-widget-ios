@@ -37,8 +37,7 @@ struct TickerProvider: AppIntentTimelineProvider {
         
         let now = Date()
         let entry = TickerTimelineEntry(date: now, configuration: configuration, ticker: ticker)
-        let reloadPolicy = TimelineReloadPolicy.after(now.addingTimeInterval(60))
-        let timeline = Timeline(entries: [entry], policy: reloadPolicy)
+        let timeline = Timeline(entries: [entry], policy: .after(now.addingTimeInterval(60)))
         return timeline
     }
 }
