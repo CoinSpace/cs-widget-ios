@@ -36,12 +36,13 @@ class AppService {
         }
     }
     
-    func formatPrice(_ price: Double) -> String {
+    func formatPrice(_ price: Double, _ currency: String) -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
-        formatter.currencyCode = "USD"
+        formatter.currencyCode = currency
         let priceString = String(format: "%.8f", price)
         let fractionDigits = priceString.split(separator: ".").last?.count ?? 0
+        formatter.minimumFractionDigits = 0
         formatter.maximumFractionDigits = fractionDigits
         return formatter.string(from: NSNumber(value: price)) ?? ""
     }

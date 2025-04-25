@@ -15,24 +15,25 @@ actor ApiClient {
     private let API_PRICE_URL: String = "https://price.coin.space/"
     
     func cryptos() async throws -> [CryptoCodable] {
-        // TODO: update ttl (in seconds)
-        return try await call("\(API_PRICE_URL)api/v1/cryptos", ttl: 10 * 60) { result in
+        return try await call("\(API_PRICE_URL)api/v1/cryptos", ttl: 12 * 60 * 60) { result in
             var dict = Set<String>()
             let filtered: [CryptoCodable] = result.compactMap { item -> CryptoCodable? in
                 guard item.logo != nil else { return nil }
+                guard item.deprecated != true else { return nil }
                 if dict.contains(item.asset) {
                     return nil
                 } else {
                     dict.insert(item.asset)
-                    return item
+                    var crypto = item
+                    crypto.logo = NSString(string: item.logo!).deletingPathExtension + ".png"
+                    return crypto
                 }
             }
             return filtered
         }
     }
     
-    func price(_ cryptoId: String) async throws -> TickerCodable? {
-        let fiat = "usd"
+    func price(_ cryptoId: String, _ fiat: String) async throws -> TickerCodable? {
         let tickers: [TickerCodable] = try await self.call("\(API_PRICE_URL)api/v1/prices/public?fiat=\(fiat)&cryptoIds=\(cryptoId)", ttl: 60)
         return tickers.first
     }
@@ -78,11 +79,14 @@ struct CryptoCodable: Codable {
     let name: String
     let symbol: String
     let asset: String
-    let logo: String?
+    let deprecated: Bool
+    var logo: String?
     var logoData: Data?
 }
 
 struct TickerCodable: Codable {
     let price: Double
     let price_change_1d: Double?
+    
+    static let defaultTicker = TickerCodable(price: 1000000, price_change_1d: 100)
 }

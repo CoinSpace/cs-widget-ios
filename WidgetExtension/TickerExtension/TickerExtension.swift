@@ -11,97 +11,108 @@ import SDWebImage
 import SDWebImageSVGNativeCoder
 
 struct TickerProvider: AppIntentTimelineProvider {
+    
     func placeholder(in context: Context) -> TickerTimelineEntry {
         print("placeholder")
-        let ticker: TickerCodable = TickerCodable(price: 1000000, price_change_1d: 100)
-        return TickerTimelineEntry(date: Date(), crypto: CryptoEntity.bitcoin, ticker: ticker)
+        let now = Date()
+        return TickerTimelineEntry(date: now, configuration: TickerConfiguration.defaultConfiguration, ticker: TickerCodable.defaultTicker)
     }
 
     func snapshot(for configuration: TickerConfiguration, in context: Context) async -> TickerTimelineEntry {
         print("snapshot")
-        let crypto = configuration.crypto.first ?? CryptoEntity.bitcoin
         var ticker: TickerCodable?
         do {
-            ticker = try await ApiClient.shared.price(crypto.id)
+            ticker = try await ApiClient.shared.price(configuration.crypto.id, configuration.currency.rawValue)
         } catch {}
-        return TickerTimelineEntry(date: Date(), crypto: crypto, ticker: ticker)
+        let now = Date()
+        return TickerTimelineEntry(date: now, configuration: configuration, ticker: ticker)
     }
     
     func timeline(for configuration: TickerConfiguration, in context: Context) async -> Timeline<TickerTimelineEntry> {
         print("timeline")
-//        var entries: [TickerTimelineEntry] = []
-
-        // Generate a timeline consisting of five entries an hour apart, starting from the current date.
-//        let currentDate = Date()
-//        for hourOffset in 0 ..< 5 {
-//            let entryDate = Calendar.current.date(byAdding: .hour, value: hourOffset, to: currentDate)!
-//            let entry = SimpleEntry(date: entryDate, configuration: configuration)
-//            entries.append(entry)
-//        }
-        
-        
-        let crypto = configuration.crypto.first ?? CryptoEntity.bitcoin
         var ticker: TickerCodable?
         do {
-            ticker = try await ApiClient.shared.price(crypto.id)
+            ticker = try await ApiClient.shared.price(configuration.crypto.id, configuration.currency.rawValue)
         } catch {}
         
-        let entry = TickerTimelineEntry(date: Date(), crypto: crypto, ticker: ticker)
-        
-        print("timeline")
-
-        return Timeline(entries: [entry], policy: .atEnd)
+        let now = Date()
+        let entry = TickerTimelineEntry(date: now, configuration: configuration, ticker: ticker)
+        let reloadPolicy = TimelineReloadPolicy.after(now.addingTimeInterval(60))
+        let timeline = Timeline(entries: [entry], policy: reloadPolicy)
+        return timeline
     }
-
-//    func relevances() async -> WidgetRelevances<ConfigurationAppIntent> {
-//        // Generate a list containing the contexts this widget is relevant in.
-//    }
 }
 
 struct TickerTimelineEntry: TimelineEntry {
     let date: Date
-    let crypto: CryptoEntity
+    let configuration: TickerConfiguration
     let ticker: TickerCodable?
 }
 
-struct TickerExtensionEntryView : View {
+struct TickerExtensionEntryView: View {
     var entry: TickerProvider.Entry
     
     @Environment(\.widgetFamily) var family
-    
+    @Environment(\.colorScheme) var colorScheme
+    @Environment(\.widgetContentMargins) var widgetContentMargins
+        
     var body: some View {
-        VStack {
-            HStack(alignment: .top) {
-                if let imageData = entry.crypto.logo {
-                    Image(uiImage: UIImage(data: imageData)!)
-                        .resizable()
-                        .frame(width: 32.0, height: 32.0)
-                } else {
-                    Circle()
-                        .fill(.orange)
-                        .frame(width: 32.0, height: 32.0)
+        ZStack() {
+            VStack() {
+                HStack(alignment: .top) {
+                    if let imageData = entry.configuration.crypto.logo, let uiImage = UIImage(data: imageData) {
+                        Image(uiImage: uiImage)
+                            .resizable()
+                            .frame(width: 32.0, height: 32.0)
+                            .id(entry.date)
+                            .transition(
+                                .asymmetric(
+                                    insertion: .opacity,
+                                    removal: .opacity.combined(with: .scale(scale: 18.0))
+                                )
+                            )
+                    } else {
+                        Circle()
+                            .fill(.orange)
+                            .frame(width: 32.0, height: 32.0)
+                    }
+                    Spacer()
+                    PriceChangeText
+                        .setFontStyle(colorScheme == .light ? WidgetFonts.textXs : WidgetFonts.textXsBold)
+                        .id(entry.date)
+                        .transition(.blurReplace)
                 }
+                .frame(
+                      maxWidth: .infinity,
+                      alignment: .topLeading
+                )
                 Spacer()
-                PriceChangeText
-                    .setFontStyle(WidgetFonts.textXs)
-            }
-            .frame(
-                  maxWidth: .infinity,
-                  alignment: .topLeading
-            )
-            Spacer()
-            VStack(alignment: .leading, spacing: 0.0) {
-                Text(entry.crypto.name)
-                    .setFontStyle(WidgetFonts.textMd)
-                    .foregroundColor(WidgetColors.secondary)
-                PriceText
-                    .setFontStyle(family == .systemSmall ? WidgetFonts.textMdBold : WidgetFonts.text2XlBold)
-                    .foregroundColor(WidgetColors.textColor)
+                VStack(alignment: .leading, spacing: 0.0) {
+                    Text(entry.configuration.crypto.name)
+                        .setFontStyle(WidgetFonts.textMd)
+                        .foregroundColor(WidgetColors.secondary)
+                    PriceText
+                        .setFontStyle(family == .systemSmall ? WidgetFonts.textMdBold : WidgetFonts.text2XlBold)
+                        .foregroundColor(WidgetColors.textColor)
+                        .id(entry.date)
+                        .transition(.blurReplace)
+                }
+                .frame(
+                    maxWidth: .infinity,
+                    alignment: .topLeading
+                )
             }
             .frame(
                 maxWidth: .infinity,
-                alignment: .topLeading
+                maxHeight: .infinity
             )
+            .padding()
+            .invalidatableContent()
+            
+            Button(intent: Reload()) {
+                Text("").frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+            .buttonStyle(OverlayButton())
         }
         .frame(
             maxWidth: .infinity,
@@ -109,15 +120,15 @@ struct TickerExtensionEntryView : View {
         )
     }
     
-    var PriceText: Text {
+    private var PriceText: Text {
         if let price = entry.ticker?.price {
-            Text(AppService.shared.formatPrice(price))
+            Text(AppService.shared.formatPrice(price, entry.configuration.currency.rawValue))
         } else {
             Text("...")
         }
     }
     
-    var PriceChangeText: Text {
+    private var PriceChangeText: Text {
         if let priceChange = entry.ticker?.price_change_1d {
             Text(String(format: "%+.2f%%", priceChange) + (family == .systemMedium ? (" " + .localized("(1 day)")) : ""))
                 .foregroundColor(priceChange >= 0 ? WidgetColors.primary : WidgetColors.danger)
@@ -128,24 +139,34 @@ struct TickerExtensionEntryView : View {
 }
 
 struct TickerExtension: Widget {
-    let kind: String = "TickerExtension"
+    static let kind: String = "TickerExtension"
 
     var body: some WidgetConfiguration {
         AppIntentConfiguration(
-            kind: kind,
+            kind: TickerExtension.kind,
             intent: TickerConfiguration.self,
             provider: TickerProvider()) { entry in
             TickerExtensionEntryView(entry: entry)
-                .containerBackground(.white, for: .widget)
+                    .containerBackground(Color(.systemBackground), for: .widget)
         }
         .configurationDisplayName("Ticker")
         .description("Get live price for your selected crypto.")
         .supportedFamilies([.systemSmall, .systemMedium])
+        .contentMarginsDisabled()
+    }
+}
+
+struct OverlayButton: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .background(.black)
+            .opacity(configuration.isPressed ? 0.4 : 0)
+            .animation(.easeOut(duration: 0.3), value: configuration.isPressed)
     }
 }
 
 #Preview(as: .systemSmall) {
     TickerExtension()
 } timeline: {
-    TickerTimelineEntry(date: .now, crypto: CryptoEntity.bitcoin, ticker: TickerCodable(price: 1000000, price_change_1d: -100.5))
+    TickerTimelineEntry(date: .now, configuration: TickerConfiguration.defaultConfiguration, ticker: TickerCodable.defaultTicker)
 }
