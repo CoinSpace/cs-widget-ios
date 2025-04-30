@@ -151,7 +151,7 @@ struct TickerExtension: Widget {
                     .containerBackground(Color(.systemBackground), for: .widget)
         }
         .configurationDisplayName("Ticker")
-        .description("Get live price for your selected crypto.")
+        .description("Live price for selected crypto.")
         .supportedFamilies([.systemSmall, .systemMedium])
         .contentMarginsDisabled()
     }

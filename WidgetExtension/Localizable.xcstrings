@@ -21,12 +21,12 @@
         }
       }
     },
-    "Get live price for your selected crypto." : {
+    "Live price for selected crypto." : {
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Получите текущую цену на выбранную вами криптовалюту."
+            "value" : "Текущая цена выбранной криптовалюты."
           }
         }
       }
