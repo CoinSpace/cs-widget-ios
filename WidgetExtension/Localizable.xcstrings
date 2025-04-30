@@ -1,8 +1,67 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "1 day" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 день"
+          }
+        }
+      }
+    },
+    "Crypto" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Криптовалюта"
+          }
+        }
+      }
+    },
+    "Get live price for your selected crypto." : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Получите текущую цену на выбранную вами криптовалюту."
+          }
+        }
+      }
+    },
+    "Local currency" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Местная валюта"
+          }
+        }
+      }
+    },
+    "Other cryptos" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Другие криптовалюты"
+          }
+        }
+      }
+    },
+    "Ticker" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Тикер"
+          }
+        }
+      }
+    },
     "Top cryptos" : {
-      "extractionState" : "stale",
       "localizations" : {
         "ru" : {
           "stringUnit" : {

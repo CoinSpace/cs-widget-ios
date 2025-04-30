@@ -127,7 +127,7 @@ struct TickerExtensionEntryView: View {
     private var PriceChangeText: some View {
         let text: Text
         if let priceChange = entry.ticker?.price_change_1d {
-            text = Text(String(format: "%+.2f%%", priceChange) + (family == .systemMedium ? (" " + .localized("(1 day)")) : ""))
+            text = Text(String(format: "%+.2f%%", priceChange) + (family == .systemMedium ? (" (" + .localized("1 day") + ")") : ""))
                 .foregroundColor(priceChange >= 0 ? WidgetColors.primary : WidgetColors.danger)
         } else {
             text = Text("...")
