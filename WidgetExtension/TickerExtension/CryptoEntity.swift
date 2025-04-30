@@ -9,21 +9,22 @@ import AppIntents
 
 struct CryptoEntity: AppEntity {
     let id: String
+    let cryptoId: String
     let symbol: String
     let name: String
-    var logo: Data?
+    var image: UIImage?
     
-    static let bitcoin: CryptoEntity = CryptoEntity(id: "bitcoin@bitcoin", symbol: "BTC", name: "Bitcoin", logo: UIImage(named: "Bitcoin")?.pngData())
+    static let bitcoin: CryptoEntity = CryptoEntity(id: "bitcoin", cryptoId: "bitcoin@bitcoin", symbol: "BTC", name: "Bitcoin", image: UIImage(named: "Bitcoin"))
     
     static var typeDisplayRepresentation: TypeDisplayRepresentation = "Crypto"
     static var defaultQuery = CryptoQuery()
      
     var displayRepresentation: DisplayRepresentation {
-        if logo != nil {
+        if image != nil {
             return DisplayRepresentation(
                 title: "\(name)",
                 subtitle: "\(symbol)",
-                image: DisplayRepresentation.Image(data: logo!, isTemplate: false)
+                image: DisplayRepresentation.Image(data: (image?.pngData())!, isTemplate: false)
             )
         } else {
             return DisplayRepresentation(
@@ -34,13 +35,13 @@ struct CryptoEntity: AppEntity {
     }
     
     static func fromCryptoCodable(_ c: CryptoCodable) -> CryptoEntity {
-        self.init(id: c._id, symbol: c.symbol, name: c.name, logo: c.logoData)
+        self.init(id: c.asset, cryptoId: c._id, symbol: c.symbol, name: c.name, image: c.image)
     }
 }
 
 struct CryptoQuery: EntityStringQuery {
     func entities(for identifiers: [String]) async throws -> [CryptoEntity] {
-        var cryptos = try await ApiClient.shared.cryptos().filter { identifiers.contains($0._id) }
+        var cryptos = try await ApiClient.shared.cryptos().filter { identifiers.contains($0.asset) }
         cryptos = await loadLogoData(cryptos)
         return cryptos.map(CryptoEntity.fromCryptoCodable)
     }
@@ -76,9 +77,9 @@ struct CryptoQuery: EntityStringQuery {
         await withTaskGroup(of: Void.self) { group in
             for i in items.indices {
                 group.addTask {
-                    // TODO: add ?ver= with app version
-                    let image = await AppService.shared.downloadImage(url: "https://price.coin.space/logo/\(items[i].logo!)")
-                    items[i].logoData = image?.pngData()
+                    let version = Bundle.main.infoDictionary!["CFBundleShortVersionString"]!
+                    let image = await AppService.shared.downloadImage(url: "https://price.coin.space/logo/\(items[i].logo!)?ver=\(version)")
+                    items[i].image = image
                 }
             }
         }

@@ -7,8 +7,6 @@
 
 import WidgetKit
 import SwiftUI
-import SDWebImage
-import SDWebImageSVGNativeCoder
 
 struct TickerProvider: AppIntentTimelineProvider {
     
@@ -22,7 +20,7 @@ struct TickerProvider: AppIntentTimelineProvider {
         print("snapshot")
         var ticker: TickerCodable?
         do {
-            ticker = try await ApiClient.shared.price(configuration.crypto.id, configuration.currency.rawValue)
+            ticker = try await ApiClient.shared.price(configuration.crypto.cryptoId, configuration.currency.rawValue)
         } catch {}
         let now = Date()
         return TickerTimelineEntry(date: now, configuration: configuration, ticker: ticker)
@@ -32,12 +30,12 @@ struct TickerProvider: AppIntentTimelineProvider {
         print("timeline")
         var ticker: TickerCodable?
         do {
-            ticker = try await ApiClient.shared.price(configuration.crypto.id, configuration.currency.rawValue)
+            ticker = try await ApiClient.shared.price(configuration.crypto.cryptoId, configuration.currency.rawValue)
         } catch {}
         
         let now = Date()
         let entry = TickerTimelineEntry(date: now, configuration: configuration, ticker: ticker)
-        let timeline = Timeline(entries: [entry], policy: .after(now.addingTimeInterval(60)))
+        let timeline = Timeline(entries: [entry], policy: .after(now.addingTimeInterval(300))) // 5 min
         return timeline
     }
 }
@@ -59,81 +57,85 @@ struct TickerExtensionEntryView: View {
         ZStack() {
             VStack() {
                 HStack(alignment: .top) {
-                    if let imageData = entry.configuration.crypto.logo, let uiImage = UIImage(data: imageData) {
-                        Image(uiImage: uiImage)
-                            .resizable()
-                            .frame(width: 32.0, height: 32.0)
-                            .id(entry.date)
-                            .transition(
-                                .asymmetric(
-                                    insertion: .opacity,
-                                    removal: .opacity.combined(with: .scale(scale: 18.0))
-                                )
-                            )
-                    } else {
-                        Circle()
-                            .fill(.orange)
-                            .frame(width: 32.0, height: 32.0)
+                    Group {
+                        if let uiImage = entry.configuration.crypto.image {
+                            Image(uiImage: uiImage).resizable()
+                        } else {
+                            Circle().fill(.orange)
+                        }
                     }
+                    .frame(width: 32.0, height: 32.0)
+                    .id(entry.date)
+                    .transition(
+                        .asymmetric(
+                            insertion: .opacity,
+                            removal: .opacity.combined(with: .scale(scale: 18.0))
+                        )
+                    )
+                    .invalidatableContent()
                     Spacer()
                     PriceChangeText
-                        .setFontStyle(colorScheme == .light ? WidgetFonts.textXs : WidgetFonts.textXsBold)
-                        .id(entry.date)
-                        .transition(.blurReplace)
                 }
-                .frame(
-                      maxWidth: .infinity,
-                      alignment: .topLeading
-                )
                 Spacer()
                 VStack(alignment: .leading, spacing: 0.0) {
                     Text(entry.configuration.crypto.name)
                         .setFontStyle(WidgetFonts.textMd)
                         .foregroundColor(WidgetColors.secondary)
-                    PriceText
-                        .setFontStyle(family == .systemSmall ? WidgetFonts.textMdBold : WidgetFonts.text2XlBold)
-                        .foregroundColor(WidgetColors.textColor)
-                        .id(entry.date)
-                        .transition(.blurReplace)
+                    ZStack() {
+                        let delta = entry.ticker?.delta ?? 0
+                        PriceText
+                            .foregroundColor(delta == 0 ? WidgetColors.textColor : (delta > 0 ? WidgetColors.primary : WidgetColors.danger))
+                            .transition(.identity)
+                        PriceText
+                            .foregroundColor(WidgetColors.textColor)
+                            .transition(
+                                    .asymmetric(
+                                        insertion: .opacity,
+                                        removal: .identity
+                                    )
+                            )
+                            .animation(.timingCurve(0, 0, 1, -1, duration: 0.7), value: entry.date)
+                    }
                 }
                 .frame(
                     maxWidth: .infinity,
                     alignment: .topLeading
                 )
             }
-            .frame(
-                maxWidth: .infinity,
-                maxHeight: .infinity
-            )
             .padding()
-            .invalidatableContent()
             
             Button(intent: Reload()) {
                 Text("").frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .buttonStyle(OverlayButton())
         }
-        .frame(
-            maxWidth: .infinity,
-            maxHeight: .infinity
-        )
     }
     
-    private var PriceText: Text {
+    private var PriceText: some View {
+        let text: Text
         if let price = entry.ticker?.price {
-            Text(AppService.shared.formatPrice(price, entry.configuration.currency.rawValue))
+            text = Text(AppService.shared.formatPrice(price, entry.configuration.currency.rawValue))
         } else {
-            Text("...")
+            text = Text("...")
         }
+        return text
+            .setFontStyle(family == .systemSmall ? WidgetFonts.textMdBold : WidgetFonts.text2XlBold)
+            .id(entry.ticker?.price)
+        
     }
     
-    private var PriceChangeText: Text {
+    private var PriceChangeText: some View {
+        let text: Text
         if let priceChange = entry.ticker?.price_change_1d {
-            Text(String(format: "%+.2f%%", priceChange) + (family == .systemMedium ? (" " + .localized("(1 day)")) : ""))
+            text = Text(String(format: "%+.2f%%", priceChange) + (family == .systemMedium ? (" " + .localized("(1 day)")) : ""))
                 .foregroundColor(priceChange >= 0 ? WidgetColors.primary : WidgetColors.danger)
         } else {
-            Text("...")
+            text = Text("...")
         }
+        return text
+            .setFontStyle(colorScheme == .light ? WidgetFonts.textXs : WidgetFonts.textXsBold)
+            .id(entry.ticker?.price)
+            .transition(.identity)
     }
 }
 

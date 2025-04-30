@@ -12,7 +12,13 @@ class AppService {
     static let shared = AppService()
         
     init() {
+        SDImageCache.shared.clearDisk()
         SDImageCodersManager.shared.addCoder(SDImageSVGNativeCoder.shared)
+        SDWebImageManager.shared.cacheKeyFilter = SDWebImageCacheKeyFilter { url in
+            var components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+            components?.query = nil
+            return components?.url?.absoluteString ?? url.absoluteString
+        }
     }
     
     func downloadImage(url: String) async -> UIImage? {
@@ -26,6 +32,12 @@ class AppService {
                     if let img = image {
                         if cacheType == .none {
                             print("Image download success: \(url)")
+                        }
+                        if cacheType == .memory {
+                            print("Image memory cache: \(url)")
+                        }
+                        if cacheType == .disk {
+                            print("Image disk cache: \(url)")
                         }
                         continuation.resume(returning: img)
                     } else {

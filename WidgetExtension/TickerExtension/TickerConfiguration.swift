@@ -22,8 +22,7 @@ struct TickerConfiguration: WidgetConfigurationIntent {
         self.crypto = crypto
         self.currency = currency
     }
-    init() {
-    }
+    init() {}
     
     static let defaultConfiguration = TickerConfiguration(crypto: CryptoEntity.bitcoin, currency: .USD)
 }
