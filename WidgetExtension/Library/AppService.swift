@@ -6,21 +6,19 @@
 //
 
 import SDWebImage
-import SDWebImageSVGNativeCoder
 
 class AppService {
     static let shared = AppService()
-        
+
     init() {
         SDImageCache.shared.clearDisk()
-        SDImageCodersManager.shared.addCoder(SDImageSVGNativeCoder.shared)
         SDWebImageManager.shared.cacheKeyFilter = SDWebImageCacheKeyFilter { url in
             var components = URLComponents(url: url, resolvingAgainstBaseURL: false)
             components?.query = nil
             return components?.url?.absoluteString ?? url.absoluteString
         }
     }
-    
+
     func downloadImage(url: String) async -> UIImage? {
         return await withCheckedContinuation { continuation in
             let thumbnailSize = CGSize(width: 128, height: 128)
@@ -47,7 +45,7 @@ class AppService {
             }
         }
     }
-    
+
     func formatPrice(_ price: Double, _ currency: String) -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
