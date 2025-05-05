@@ -38,11 +38,14 @@ actor ApiClient {
     func price(_ cryptoId: String, _ fiat: String) async throws -> TickerCodable? {
         let tickers: [TickerCodable] = try await self.call("\(API_PRICE_URL)api/v1/prices/public?fiat=\(fiat)&cryptoIds=\(cryptoId)", ttl: 60)
         var ticker = tickers.first
-        let key = "\(cryptoId):\(fiat)"
-        if let oldPrice = prices[key], let price = ticker?.price {
+        let key = "price:\(cryptoId):\(fiat)"
+        
+        let defaults = UserDefaults.standard
+        if defaults.object(forKey: key) != nil, let price = ticker?.price {
+            let oldPrice = defaults.double(forKey: key)
             ticker?.delta = price - oldPrice
         }
-        prices[key] = ticker?.price
+        defaults.set(ticker?.price, forKey: key)
         return ticker
     }
     
