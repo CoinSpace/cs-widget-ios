@@ -15,6 +15,11 @@ struct CryptoEntity: AppEntity {
     var image: UIImage?
     
     static let bitcoin: CryptoEntity = CryptoEntity(id: "bitcoin", cryptoId: "bitcoin@bitcoin", symbol: "BTC", name: "Bitcoin", image: UIImage(named: "Bitcoin"))
+    static let ethereum: CryptoEntity = CryptoEntity(id: "ethereum", cryptoId: "ethereum@ethereum", symbol: "ETH", name: "Ethereum", image: UIImage(named: "Ethereum"))
+    static let solana: CryptoEntity = CryptoEntity(id: "solana", cryptoId: "solana@solana", symbol: "SOL", name: "Solana", image: UIImage(named: "Solana"))
+    static let dogecoin: CryptoEntity = CryptoEntity(id: "dogecoin", cryptoId: "dogecoin@dogecoin", symbol: "DOGE", name: "Dogecoin", image: UIImage(named: "Dogecoin"))
+    static let litecoin: CryptoEntity = CryptoEntity(id: "litecoin", cryptoId: "litecoin@litecoin", symbol: "LTC", name: "Litecoin", image: UIImage(named: "Litecoin"))
+    static let monero: CryptoEntity = CryptoEntity(id: "monero", cryptoId: "monero@monero", symbol: "XMR", name: "Monero", image: UIImage(named: "Monero"))
     
     static var typeDisplayRepresentation: TypeDisplayRepresentation = "Crypto"
     static var defaultQuery = CryptoQuery()
@@ -55,7 +60,20 @@ struct CryptoQuery: EntityStringQuery {
     }
     
     func defaultResult() async -> [CryptoEntity]? {
-        return [CryptoEntity.bitcoin]
+        return [
+            CryptoEntity.bitcoin,
+            CryptoEntity.ethereum,
+            CryptoEntity.solana,
+            CryptoEntity.dogecoin,
+            CryptoEntity.litecoin,
+            CryptoEntity.monero
+        ]
+    }
+    
+    func topCryptos(_ size: Int) async throws -> [CryptoEntity]? {
+        var cryptos = Array(try await ApiClient.shared.cryptos().prefix(size))
+        cryptos = await loadLogoData(cryptos)
+        return cryptos.map(CryptoEntity.fromCryptoCodable)
     }
     
     private func entitiesWithLogo(_ title: LocalizedStringResource = "", _ search: String = "") async throws -> IntentItemCollection<CryptoEntity> {
@@ -74,14 +92,21 @@ struct CryptoQuery: EntityStringQuery {
     
     private func loadLogoData(_ cryptos: [CryptoCodable]) async -> [CryptoCodable] {
         var items = cryptos
-        await withTaskGroup(of: Void.self) { group in
+        var images = Array<UIImage?>(repeating: nil, count: items.count)
+        await withTaskGroup(of: (Int, UIImage?).self) { group in
             for i in items.indices {
                 group.addTask {
                     let version = Bundle.main.infoDictionary!["CFBundleShortVersionString"]!
                     let image = await AppService.shared.downloadImage(url: "https://price.coin.space/logo/\(items[i].logo!)?ver=\(version)")
-                    items[i].image = image
+                    return (i, image)
                 }
             }
+            for await (index, image) in group {
+                images[index] = image
+            }
+        }
+        for i in items.indices {
+            items[i].image = images[i]
         }
         return items
     }

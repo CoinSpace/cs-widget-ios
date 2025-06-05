@@ -35,18 +35,28 @@ actor ApiClient {
         }
     }
     
-    func price(_ cryptoId: String, _ fiat: String) async throws -> TickerCodable? {
-        let tickers: [TickerCodable] = try await self.call("\(API_PRICE_URL)api/v1/prices/public?fiat=\(fiat)&cryptoIds=\(cryptoId)", ttl: 60)
-        var ticker = tickers.first
-        let key = "price:\(cryptoId):\(fiat)"
+    func prices(_ cryptoIds: [String], _ fiat: String) async throws -> [TickerCodable] {
+        let tickers: [TickerCodable] = try await self.call("\(API_PRICE_URL)api/v1/prices/public?fiat=\(fiat)&cryptoIds=\(cryptoIds.joined(separator: ","))", ttl: 60)
         
+        let key = "prices:\(cryptoIds.joined(separator: ",")):\(fiat)"
         let defaults = UserDefaults.standard
-        if defaults.object(forKey: key) != nil, let price = ticker?.price {
-            let oldPrice = defaults.double(forKey: key)
-            ticker?.delta = price - oldPrice
+        var oldTickers: [TickerCodable] = []
+        if let data = defaults.data(forKey: key) {
+            if let decoded = try? JSONDecoder().decode([TickerCodable].self, from: data) {
+                oldTickers = decoded
+            }
         }
-        defaults.set(ticker?.price, forKey: key)
-        return ticker
+        if let encoded = try? JSONEncoder().encode(tickers) {
+            defaults.set(encoded, forKey: key)
+        }
+        
+        return cryptoIds.compactMap { cryptoId in
+            var ticker = tickers.first(where: { $0.cryptoId == cryptoId })
+            if let oldTicker = oldTickers.first(where: { $0.cryptoId == cryptoId }), let price = ticker?.price {
+                ticker?.delta = price - oldTicker.price
+            }
+            return ticker
+        }
     }
     
     func call<T: Codable>(_ url: String, ttl: TimeInterval = 0, completion: @escaping (T) -> T = { $0 }) async throws -> T {
@@ -105,16 +115,21 @@ struct CryptoCodable: Codable {
 }
 
 struct TickerCodable: Codable {
+    let cryptoId: String
     let price: Double
     let price_change_1d: Double?
     
     enum CodingKeys: String, CodingKey {
-        case price, price_change_1d
+        case cryptoId, price, price_change_1d
     }
     
     var delta: Double?
     
-    static let defaultTicker = TickerCodable(price: 1000000, price_change_1d: 100)
+    static let defaultTicker = TickerCodable(cryptoId: "bitcoin@bitcoin", price: 1000000, price_change_1d: 100)
+    
+    static func defaultTickers(size: Int) -> [TickerCodable] {
+        Array(repeating: self.defaultTicker, count: size)
+    }
 }
 
 final class CacheEntryObject {
