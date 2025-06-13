@@ -47,7 +47,7 @@ struct CryptoEntity: AppEntity {
 struct CryptoQuery: EntityStringQuery {
     func entities(for identifiers: [String]) async throws -> [CryptoEntity] {
         var cryptos = try await ApiClient.shared.cryptos().filter { identifiers.contains($0.asset) }
-        cryptos = await loadLogoData(cryptos)
+        cryptos = await CryptoCodable.loadLogoData(cryptos)
         return cryptos.map(CryptoEntity.fromCryptoCodable)
     }
    
@@ -72,7 +72,7 @@ struct CryptoQuery: EntityStringQuery {
     
     func topCryptos(_ size: Int) async throws -> [CryptoEntity]? {
         var cryptos = Array(try await ApiClient.shared.cryptos().prefix(size))
-        cryptos = await loadLogoData(cryptos)
+        cryptos = await CryptoCodable.loadLogoData(cryptos)
         return cryptos.map(CryptoEntity.fromCryptoCodable)
     }
     
@@ -83,31 +83,10 @@ struct CryptoQuery: EntityStringQuery {
         }
         let allCryptos = try await ApiClient.shared.cryptos()
         var cryptos = Array((search.isEmpty ? allCryptos : allCryptos.filter { "\($0.name) \($0.symbol)".localizedCaseInsensitiveContains(needle) }).prefix(10))
-        cryptos = await loadLogoData(cryptos)
+        cryptos = await CryptoCodable.loadLogoData(cryptos)
         
         return IntentItemCollection(sections: [
             IntentItemSection(title, items: cryptos.map(CryptoEntity.fromCryptoCodable))
         ])
-    }
-    
-    private func loadLogoData(_ cryptos: [CryptoCodable]) async -> [CryptoCodable] {
-        var items = cryptos
-        var images = Array<UIImage?>(repeating: nil, count: items.count)
-        await withTaskGroup(of: (Int, UIImage?).self) { group in
-            for i in items.indices {
-                group.addTask {
-                    let version = Bundle.main.infoDictionary!["CFBundleShortVersionString"]!
-                    let image = await AppService.shared.downloadImage(url: "https://price.coin.space/logo/\(items[i].logo!)?ver=\(version)")
-                    return (i, image)
-                }
-            }
-            for await (index, image) in group {
-                images[index] = image
-            }
-        }
-        for i in items.indices {
-            items[i].image = images[i]
-        }
-        return items
     }
 }

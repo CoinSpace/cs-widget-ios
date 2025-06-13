@@ -36,6 +36,7 @@ struct WidgetColors {
     static let secondary = Color("Secondary")
     static let danger = Color("Danger")
     static let textColor = Color("TextColor")
+    static let platformStroke = Color("PlatformStroke")
 }
 
 struct OverlayButton: ButtonStyle {
@@ -47,11 +48,20 @@ struct OverlayButton: ButtonStyle {
     }
 }
 
-struct CryptoLogoCryptoLogo: View {
+struct CryptoLogo: View {
     let date: Date
     let size: CGFloat
-    let image: UIImage?
+    let crypto: UIImage?
+    let platform: UIImage?
     let animated: Bool
+    
+    init(date: Date, size: CGFloat, crypto: UIImage?, platform: UIImage? = nil, animated: Bool = false) {
+        self.date = date
+        self.size = size
+        self.crypto = crypto
+        self.platform = platform
+        self.animated = animated
+    }
     
     @Environment(\.widgetFamily) var family
     
@@ -59,11 +69,21 @@ struct CryptoLogoCryptoLogo: View {
         
         let scale = family == .systemSmall ? 18.0 : 22.0
         
-        Group {
-            if let uiImage = image {
+        ZStack(alignment: .bottomTrailing) {
+            if let uiImage = crypto {
                 Image(uiImage: uiImage).resizable()
             } else {
                 Circle().fill(.orange)
+            }
+            if let uiImage = platform {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .frame(width: 20, height: 20)
+                    .clipShape(Circle())
+                        .overlay(
+                            Circle().stroke(WidgetColors.platformStroke, lineWidth: 1)
+                        )
+                    .offset(x: 4, y: 4)
             }
         }
         .frame(width: size, height: size)
@@ -83,9 +103,7 @@ struct PriceView: View {
     let date: Date
     let currency: CurrencyEntity
     let fontStyle: FontStyle
-    
-    @Environment(\.widgetFamily) var family
-    
+        
     var body: some View {
         ZStack() {
             let delta = ticker?.delta ?? 0
@@ -124,7 +142,6 @@ struct PriceChangeView: View {
     let ticker: TickerCodable?
     let suffix: String
     
-    @Environment(\.widgetFamily) var family
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
@@ -137,7 +154,6 @@ struct PriceChangeView: View {
         }
         return text
             .setFontStyle(colorScheme == .light ? WidgetFonts.textXs : WidgetFonts.textXsBold)
-            .id(ticker?.price)
-            .transition(.identity)
+            .contentTransition(.identity)
     }
 }

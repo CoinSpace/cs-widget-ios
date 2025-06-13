@@ -14,7 +14,7 @@ struct MultiTickerProvider: AppIntentTimelineProvider {
         print("placeholder")
         let now = Date()
         let size = context.family == .systemMedium ? 3 : 6
-        return MultiTickerTimelineEntry(date: now, configuration: MultiTickerConfiguration.defaultConfiguration(size: size), tickers: TickerCodable.defaultTickers(size: size))
+        return MultiTickerTimelineEntry(date: now, configuration: MultiTickerConfiguration.defaultConfiguration(size: size), tickers: TickerCodable.bitcoins(size: size))
     }
 
     func snapshot(for configuration: MultiTickerConfiguration, in context: Context) async -> MultiTickerTimelineEntry {
@@ -78,7 +78,7 @@ struct MultiTickerExtensionEntryView: View {
                     let ticker = entry.tickers[index]
                     
                     HStack(alignment: .center, spacing: 12.0) {
-                        CryptoLogoCryptoLogo(date: entry.date, size: family == .systemMedium ? 32.0 : 40.0, image: crypto.image, animated: index == 0)
+                        CryptoLogo(date: entry.date, size: family == .systemMedium ? 32.0 : 40.0, crypto: crypto.image, animated: index == 0)
                         
                         VStack(spacing: 0.0) {
                             HStack() {
@@ -140,12 +140,12 @@ struct MultiTickerExtension: Widget {
     MultiTickerExtension()
 } timeline: {
     let size = 3
-    MultiTickerTimelineEntry(date: .now, configuration: MultiTickerConfiguration.defaultConfiguration(size: size), tickers: TickerCodable.defaultTickers(size: size))
+    MultiTickerTimelineEntry(date: .now, configuration: MultiTickerConfiguration.defaultConfiguration(size: size), tickers: TickerCodable.bitcoins(size: size))
 }
 
 #Preview(as: .systemLarge) {
     MultiTickerExtension()
 } timeline: {
     let size = 6
-    MultiTickerTimelineEntry(date: .now, configuration: MultiTickerConfiguration.defaultConfiguration(size: size), tickers: TickerCodable.defaultTickers(size: size))
+    MultiTickerTimelineEntry(date: .now, configuration: MultiTickerConfiguration.defaultConfiguration(size: size), tickers: TickerCodable.bitcoins(size: size))
 }

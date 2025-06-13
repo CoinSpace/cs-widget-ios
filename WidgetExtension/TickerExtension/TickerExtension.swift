@@ -13,7 +13,7 @@ struct TickerProvider: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> TickerTimelineEntry {
         print("placeholder")
         let now = Date()
-        return TickerTimelineEntry(date: now, configuration: TickerConfiguration.defaultConfiguration, ticker: TickerCodable.defaultTicker)
+        return TickerTimelineEntry(date: now, configuration: TickerConfiguration.defaultConfiguration, ticker: TickerCodable.bitcoin)
     }
 
     func snapshot(for configuration: TickerConfiguration, in context: Context) async -> TickerTimelineEntry {
@@ -57,7 +57,7 @@ struct TickerExtensionEntryView: View {
         ZStack() {
             VStack() {
                 HStack(alignment: .top) {
-                    CryptoLogoCryptoLogo(date: entry.date, size: 32.0, image: entry.configuration.crypto.image, animated: true)
+                    CryptoLogo(date: entry.date, size: 32.0, crypto: entry.configuration.crypto.image, animated: true)
                     Spacer()
                     PriceChangeView(ticker: entry.ticker, suffix: family == .systemSmall ? "" : " (" + .localized("1 day") + ")")
                 }
@@ -66,6 +66,7 @@ struct TickerExtensionEntryView: View {
                     Text(entry.configuration.crypto.name)
                         .setFontStyle(WidgetFonts.textMd)
                         .foregroundColor(WidgetColors.secondary)
+                    
                     PriceView(
                         ticker: entry.ticker,
                         date: entry.date,
@@ -109,5 +110,5 @@ struct TickerExtension: Widget {
 #Preview(as: .systemSmall) {
     TickerExtension()
 } timeline: {
-    TickerTimelineEntry(date: .now, configuration: TickerConfiguration.defaultConfiguration, ticker: TickerCodable.defaultTicker)
+    TickerTimelineEntry(date: .now, configuration: TickerConfiguration.defaultConfiguration, ticker: TickerCodable.bitcoin)
 }

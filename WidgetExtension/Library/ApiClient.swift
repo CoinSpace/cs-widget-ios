@@ -112,6 +112,36 @@ struct CryptoCodable: Codable {
     }
     
     var image: UIImage?
+    var platform: CryptoPlatform?
+    
+    static let bitcoin = CryptoCodable(asset: "bitcoin", _id: "bitcoin@bitcoin", name: "Bitcoin", symbol: "BTC", deprecated: false, image: UIImage(named: "Bitcoin"))
+    static let tether = CryptoCodable(asset: "tether", _id: "tether@ethereum", name: "Tether", symbol: "USDT", deprecated: false, image: UIImage(named: "Bitcoin"), platform: CryptoPlatform(name: "Ethereum", image: UIImage(named: "Ethereum")!))
+    
+    static func loadLogoData(_ cryptos: [CryptoCodable]) async -> [CryptoCodable] {
+        var items = cryptos
+        var images = Array<UIImage?>(repeating: nil, count: items.count)
+        await withTaskGroup(of: (Int, UIImage?).self) { group in
+            for i in items.indices {
+                group.addTask {
+                    let version = Bundle.main.infoDictionary!["CFBundleShortVersionString"]!
+                    let image = await AppService.shared.downloadImage(url: "https://price.coin.space/logo/\(items[i].logo!)?ver=\(version)")
+                    return (i, image)
+                }
+            }
+            for await (index, image) in group {
+                images[index] = image
+            }
+        }
+        for i in items.indices {
+            items[i].image = images[i]
+        }
+        return items
+    }
+}
+
+struct CryptoPlatform {
+    let name: String
+    let image: UIImage
 }
 
 struct TickerCodable: Codable {
@@ -125,10 +155,11 @@ struct TickerCodable: Codable {
     
     var delta: Double?
     
-    static let defaultTicker = TickerCodable(cryptoId: "bitcoin@bitcoin", price: 1000000, price_change_1d: 100)
+    static let bitcoin = TickerCodable(cryptoId: "bitcoin@bitcoin", price: 1000000, price_change_1d: 100)
+    static let tether = TickerCodable(cryptoId: "tether@ethereum", price: 1, price_change_1d: 1)
     
-    static func defaultTickers(size: Int) -> [TickerCodable] {
-        Array(repeating: self.defaultTicker, count: size)
+    static func bitcoins(size: Int) -> [TickerCodable] {
+        Array(repeating: self.bitcoin, count: size)
     }
 }
 

@@ -1,6 +1,6 @@
 //
 //  TickerConfiguration.swift
-//  WidgetExtension
+//  TickerExtension
 //
 //  Created by Nikita Verkhovin on 11.04.2025.
 //
@@ -17,7 +17,7 @@ struct TickerConfiguration: WidgetConfigurationIntent {
     
     @Parameter(title: "Local currency", default: .USD)
     var currency: CurrencyEntity
-        
+    
     init(crypto: CryptoEntity, currency: CurrencyEntity) {
         self.crypto = crypto
         self.currency = currency
