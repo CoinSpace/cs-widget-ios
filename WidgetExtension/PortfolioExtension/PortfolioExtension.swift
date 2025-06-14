@@ -78,8 +78,6 @@ struct PortfolioProvider: AppIntentTimelineProvider {
         var tickers: [TickerCodable] = []
         do {
             let cryptoIds = cryptos.map { $0._id }
-            print("cryptoIds")
-            print(cryptoIds.count)
             tickers = try await ApiClient.shared.prices(cryptoIds, configuration.currency.rawValue)
         } catch {}
 
@@ -238,7 +236,7 @@ struct PortfolioExtensionEntryView: View {
                 let crypto = portfolioCrypto.crypto
                 let ticker = portfolioCrypto.ticker
                 let price = AppService.shared.formatFiat(ticker.price, entry.configuration.currency.rawValue, true)
-                let amount = portfolioCrypto.amount.value
+                let amount = AppService.shared.formatCrypto(portfolioCrypto.amount.value, ticker.price)
                 let amountFiat = AppService.shared.formatFiat(portfolioCrypto.amount.fiat, entry.configuration.currency.rawValue, false)
 
                 HStack(alignment: .top, spacing: 12) {

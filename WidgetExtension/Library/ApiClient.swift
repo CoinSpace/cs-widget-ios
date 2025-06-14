@@ -38,7 +38,17 @@ actor ApiClient {
     }
     
     func prices(_ cryptoIds: [String], _ fiat: String) async throws -> [TickerCodable] {
-        let tickers: [TickerCodable] = try await self.call("\(API_PRICE_URL)api/v1/prices/public?fiat=\(fiat)&cryptoIds=\(cryptoIds.joined(separator: ","))", ttl: 60)
+        let chunkSize = 30
+        let chunks = stride(from: 0, to: cryptoIds.count, by: chunkSize).map {
+            Array(cryptoIds[$0..<min($0 + chunkSize, cryptoIds.count)])
+        }
+        var allTickers: [TickerCodable] = []
+        
+        for chunk in chunks {
+            let url = "\(API_PRICE_URL)api/v1/prices/public?fiat=\(fiat)&cryptoIds=\(chunk.joined(separator: ","))"
+            let tickers: [TickerCodable] = try await self.call(url, ttl: 60)
+            allTickers.append(contentsOf: tickers)
+        }
         
         let key = "prices:\(cryptoIds.joined(separator: ",")):\(fiat)"
         let defaults = UserDefaults.standard
@@ -48,12 +58,12 @@ actor ApiClient {
                 oldTickers = decoded
             }
         }
-        if let encoded = try? JSONEncoder().encode(tickers) {
+        if let encoded = try? JSONEncoder().encode(allTickers) {
             defaults.set(encoded, forKey: key)
         }
         
         return cryptoIds.compactMap { cryptoId in
-            var ticker = tickers.first(where: { $0.cryptoId == cryptoId })
+            var ticker = allTickers.first(where: { $0.cryptoId == cryptoId })
             if let oldTicker = oldTickers.first(where: { $0.cryptoId == cryptoId }), let price = ticker?.price {
                 ticker?.delta = price - oldTicker.price
             }

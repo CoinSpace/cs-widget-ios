@@ -58,6 +58,13 @@ class AppService {
         }
         return formatter.string(from: NSNumber(value: fiat)) ?? ""
     }
+    
+    func formatCrypto(_ amount: Double, _ price: Double) -> String {
+        let priceOfCent = (1 / price) * 0.01
+        let log10Value = log10(priceOfCent)
+        let precision = log10Value > -1 ? 0 : Int(ceil(abs(log10Value)))
+        return String(format: "%.\(precision)f", amount)
+    }
 }
 
 extension String {
