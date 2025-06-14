@@ -46,15 +46,17 @@ class AppService {
         }
     }
 
-    func formatPrice(_ price: Double, _ currency: String) -> String {
+    func formatFiat(_ fiat: Double, _ currency: String, _ customFractionDigits: Bool) -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.currencyCode = currency
-        let priceString = String(format: "%.8f", price)
-        let fractionDigits = priceString.split(separator: ".").last?.count ?? 0
-        formatter.minimumFractionDigits = 0
-        formatter.maximumFractionDigits = price > 1000 ? 0 : fractionDigits
-        return formatter.string(from: NSNumber(value: price)) ?? ""
+        if customFractionDigits {
+            let fiatString = String(format: "%.8f", fiat)
+            let fractionDigits = fiatString.split(separator: ".").last?.count ?? 0
+            formatter.minimumFractionDigits = 0
+            formatter.maximumFractionDigits = fiat > 1000 ? 0 : fractionDigits
+        }
+        return formatter.string(from: NSNumber(value: fiat)) ?? ""
     }
 }
 

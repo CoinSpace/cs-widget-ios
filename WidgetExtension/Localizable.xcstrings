@@ -1,7 +1,14 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "" : {
+
+    },
+    "..." : {
+
+    },
     "1 day" : {
+      "extractionState" : "stale",
       "localizations" : {
         "bs" : {
           "stringUnit" : {
@@ -162,6 +169,7 @@
       }
     },
     "Crypto" : {
+      "extractionState" : "stale",
       "localizations" : {
         "bs" : {
           "stringUnit" : {
@@ -322,6 +330,7 @@
       }
     },
     "Cryptos" : {
+      "extractionState" : "stale",
       "localizations" : {
         "bs" : {
           "stringUnit" : {
@@ -482,6 +491,7 @@
       }
     },
     "Live price for selected crypto." : {
+      "extractionState" : "stale",
       "localizations" : {
         "bs" : {
           "stringUnit" : {
@@ -642,6 +652,7 @@
       }
     },
     "Live prices for multiple cryptos." : {
+      "extractionState" : "stale",
       "localizations" : {
         "bs" : {
           "stringUnit" : {
@@ -802,6 +813,7 @@
       }
     },
     "Local currency" : {
+      "extractionState" : "stale",
       "localizations" : {
         "bs" : {
           "stringUnit" : {
@@ -962,6 +974,7 @@
       }
     },
     "Other cryptos" : {
+      "extractionState" : "stale",
       "localizations" : {
         "bs" : {
           "stringUnit" : {
@@ -1121,7 +1134,14 @@
         }
       }
     },
+    "Portfolio" : {
+
+    },
+    "Sign In" : {
+
+    },
     "Ticker" : {
+      "extractionState" : "stale",
       "localizations" : {
         "bs" : {
           "stringUnit" : {
@@ -1282,6 +1302,7 @@
       }
     },
     "Top cryptos" : {
+      "extractionState" : "stale",
       "localizations" : {
         "bs" : {
           "stringUnit" : {

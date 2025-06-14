@@ -12,7 +12,7 @@ import SwiftUI
 struct WidgetExtensionBundle: WidgetBundle {
     var body: some Widget {
         // Comment out all widget kinds except the one you want to debug
-        TickerExtension()
+//        TickerExtension()
 //        MultiTickerExtension()
         PortfolioExtension()
     }

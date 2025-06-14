@@ -52,16 +52,8 @@ struct CryptoLogo: View {
     let date: Date
     let size: CGFloat
     let crypto: UIImage?
-    let platform: UIImage?
-    let animated: Bool
-    
-    init(date: Date, size: CGFloat, crypto: UIImage?, platform: UIImage? = nil, animated: Bool = false) {
-        self.date = date
-        self.size = size
-        self.crypto = crypto
-        self.platform = platform
-        self.animated = animated
-    }
+    var platform: UIImage? = nil
+    var animated: Bool = false
     
     @Environment(\.widgetFamily) var family
     
@@ -103,6 +95,7 @@ struct PriceView: View {
     let date: Date
     let currency: CurrencyEntity
     let fontStyle: FontStyle
+    var customFractionDigits: Bool = true
         
     var body: some View {
         ZStack() {
@@ -127,7 +120,7 @@ struct PriceView: View {
     private var PriceText: some View {
         let text: Text
         if let price = ticker?.price {
-            text = Text(AppService.shared.formatPrice(price, currency.rawValue))
+            text = Text(AppService.shared.formatFiat(price, currency.rawValue, customFractionDigits))
         } else {
             text = Text("...")
         }

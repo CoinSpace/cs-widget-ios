@@ -16,16 +16,18 @@ actor ApiClient {
     
     private var prices: [String: Double] = [:]
     
-    func cryptos() async throws -> [CryptoCodable] {
+    func cryptos(uniqueAssets: Bool = true) async throws -> [CryptoCodable] {
         return try await call("\(API_PRICE_URL)api/v1/cryptos", ttl: 12 * 60 * 60) { result in
             var dict = Set<String>()
             let filtered: [CryptoCodable] = result.compactMap { item -> CryptoCodable? in
                 guard item.logo != nil else { return nil }
                 guard item.deprecated != true else { return nil }
-                if dict.contains(item.asset) {
+                if dict.contains(item.asset) && uniqueAssets {
                     return nil
                 } else {
-                    dict.insert(item.asset)
+                    if uniqueAssets {
+                        dict.insert(item.asset)
+                    }
                     var crypto = item
                     crypto.logo = NSString(string: item.logo!).deletingPathExtension + ".png"
                     return crypto
