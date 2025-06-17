@@ -8,22 +8,6 @@
 import WidgetKit
 import SwiftUI
 
-struct PortfolioCryptoCodable: Codable {
-    let _id: String
-    let balance: Double
-
-    init(from decoder: Decoder) throws {
-        let values = try decoder.container(keyedBy: CodingKeys.self)
-        _id = try values.decode(String.self, forKey: ._id)
-        let balanceString = try values.decode(String.self, forKey: .balance)
-        if let value = Double(balanceString) {
-            balance = value
-        } else {
-            balance = 0
-        }
-    }
-}
-
 struct PortfolioProvider: AppIntentTimelineProvider {
 
     func placeholder(in context: Context) -> PortfolioTimelineEntry {
@@ -34,120 +18,19 @@ struct PortfolioProvider: AppIntentTimelineProvider {
 
     func snapshot(for configuration: PortfolioConfiguration, in context: Context) async -> PortfolioTimelineEntry {
         print("snapshot")
-//        let size = context.family == .systemMedium ? 3 : 6
-//        if size == 3 && configuration.cryptos.count > size {
-//            configuration.cryptos.removeSubrange(size..<configuration.cryptos.count)
-//        }
-        var tickers: [TickerCodable] = []
-//        do {
-//            let cryptoIds = configuration.cryptos.map { $0.cryptoId }
-//            tickers = try await ApiClient.shared.prices(cryptoIds, configuration.currency.rawValue)
-//        } catch {}
         let now = Date()
-        return PortfolioTimelineEntry(date: now, portfolio: .defaultPortfolio, configuration: configuration)
+        return PortfolioTimelineEntry(date: now, portfolio: nil, configuration: configuration)
     }
 
     func timeline(for configuration: PortfolioConfiguration, in context: Context) async -> Timeline<PortfolioTimelineEntry> {
         print("timeline")
-
-        var portfolioCryptos: [PortfolioCryptoCodable] = []
-        var isLogged: Bool = false
-        if let defaults = UserDefaults(suiteName: "group.com.coinspace.shared"),
-           let str = defaults.string(forKey: "portfolioCryptos"),
-           let data = str.data(using: .utf8)
-        {
-            if let decoded = try? JSONDecoder().decode([PortfolioCryptoCodable].self, from: data) {
-                portfolioCryptos = decoded
-                isLogged = true
-            }
-        }
-
-        var cryptos: [CryptoCodable] = []
-        do {
-            let allCryptos = try await ApiClient.shared.cryptos(uniqueAssets: false)
-            portfolioCryptos = portfolioCryptos.filter { crypto in
-                if let crypto = allCryptos.first(where: { $0._id == crypto._id }) {
-                    cryptos.append(crypto)
-                    return true
-                } else {
-                    return false
-                }
-            }
-        } catch {}
-
-        var tickers: [TickerCodable] = []
-        do {
-            let cryptoIds = cryptos.map { $0._id }
-            tickers = try await ApiClient.shared.prices(cryptoIds, configuration.currency.rawValue)
-        } catch {}
-
+        let rows = context.family == .systemLarge ? 2 : 0
+        let portfolio: Portfolio? = await configuration.getPortfolio(rows)
         let now = Date()
-
-        var balance = 0.0
-        var balanceChange = 0.0
-        for (index, portfolioCrypto) in portfolioCryptos.enumerated() {
-            let ticker = tickers[index]
-            let fiat = portfolioCrypto.balance * ticker.price
-            balance += fiat
-            balanceChange += fiat * (ticker.price_change_1d ?? 0)
-        }
-        let balanceChangePercent = balance == 0.0 ? 0.0 : (balanceChange / balance)
-        var totalTicker = TickerCodable(cryptoId: "portfolio", price: balance, price_change_1d: balanceChangePercent)
-        
-        let key = "portfolio:\(configuration.currency.rawValue)"
-        let defaults = UserDefaults.standard
-        if let data = defaults.data(forKey: key) {
-            if let decoded = try? JSONDecoder().decode(TickerCodable.self, from: data) {
-                totalTicker.delta = totalTicker.price - decoded.price
-            }
-        }
-        if let encoded = try? JSONEncoder().encode(totalTicker) {
-            defaults.set(encoded, forKey: key)
-        }
-        
-        if cryptos.count > 2 {
-            cryptos.removeSubrange(2..<cryptos.count)
-        }
-        cryptos = await CryptoCodable.loadLogoData(cryptos)
-
-        let pt: [PortfolioCrypto] = cryptos.enumerated().map { index, crypto in
-            let ticker = tickers[index]
-            let portfolioCrypto = portfolioCryptos[index]
-            let fiat = portfolioCrypto.balance * ticker.price
-            let amount: CryptoAmount = CryptoAmount(value: portfolioCrypto.balance, fiat: fiat)
-            return PortfolioCrypto(crypto: crypto, ticker: ticker, amount: amount)
-        }
-
-        let portfolio: Portfolio? = isLogged ? Portfolio(total: totalTicker, cryptos: pt) : nil
-
         let entry = PortfolioTimelineEntry(date: now, portfolio: portfolio, configuration: configuration)
         let timeline = Timeline(entries: [entry], policy: .after(now.addingTimeInterval(300))) // 5 min
         return timeline
     }
-}
-
-struct Portfolio {
-    let total: TickerCodable
-    let cryptos: [PortfolioCrypto]
-
-    static let defaultPortfolio = Portfolio(
-        total: TickerCodable(cryptoId: "portfolio", price: 1000100, price_change_1d: 100),
-        cryptos: [
-            PortfolioCrypto(crypto: CryptoCodable.bitcoin, ticker: TickerCodable.bitcoin, amount: CryptoAmount(value: 1, fiat: 1000000)),
-            PortfolioCrypto(crypto: CryptoCodable.tether, ticker: TickerCodable.tether, amount: CryptoAmount(value: 100, fiat: 100)),
-        ]
-    )
-}
-
-struct PortfolioCrypto {
-    let crypto: CryptoCodable
-    let ticker: TickerCodable
-    let amount: CryptoAmount
-}
-
-struct CryptoAmount {
-    let value: Double
-    let fiat: Double
 }
 
 struct PortfolioTimelineEntry: TimelineEntry {
@@ -175,7 +58,8 @@ struct PortfolioExtensionEntryView: View {
                     )
                     Spacer()
                     if let portfolio = entry.portfolio {
-                        PriceChangeView(ticker: portfolio.total, suffix: family == .systemSmall ? "" : " (" + .localized("1 day") + ")")
+                        let suffix = family == .systemSmall ? "" : " (" + .localized("1 day") + ")"
+                        PriceChangeView(ticker: portfolio.total, suffix: suffix)
                     }
                 }
                 Spacer()
@@ -202,7 +86,7 @@ struct PortfolioExtensionEntryView: View {
                         alignment: .topLeading
                     )
 
-                    if let portfolio = entry.portfolio, portfolio.cryptos.count > 0, family == .systemLarge {
+                    if let portfolio = entry.portfolio, portfolio.cryptos.count > 0 {
                         PortfolioView(entry: entry)
                     }
                 }
@@ -244,7 +128,7 @@ struct PortfolioExtensionEntryView: View {
                         date: entry.date,
                         size: 40.0,
                         crypto: crypto.image,
-                        platform: crypto.platform?.image
+                        platform: crypto.cryptoPlatform?.image
                     )
                     .padding(.top, 4.0)
                     VStack(spacing: 0) {
@@ -268,7 +152,7 @@ struct PortfolioExtensionEntryView: View {
                             Text(price)
                                 .setFontStyle(WidgetFonts.textXs)
                                 .foregroundColor(WidgetColors.secondary)
-                            PriceChangeView(ticker: ticker, suffix: "")
+                            PriceChangeView(ticker: ticker)
                             Spacer()
                         }
                     }.contentTransition(.identity)
@@ -277,7 +161,7 @@ struct PortfolioExtensionEntryView: View {
         }
 
         private func cryptoSubtitle(_ crypto: CryptoCodable) -> String {
-            if let platform = crypto.platform {
+            if let platform = crypto.cryptoPlatform {
                 return "\(crypto.name) • \(platform.name)"
             } else {
                 return crypto.name

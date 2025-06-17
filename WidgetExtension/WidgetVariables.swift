@@ -133,7 +133,7 @@ struct PriceView: View {
 struct PriceChangeView: View {
     
     let ticker: TickerCodable?
-    let suffix: String
+    var suffix: String = ""
     
     @Environment(\.colorScheme) var colorScheme
     

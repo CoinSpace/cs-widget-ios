@@ -17,24 +17,22 @@ actor ApiClient {
     private var prices: [String: Double] = [:]
     
     func cryptos(uniqueAssets: Bool = true) async throws -> [CryptoCodable] {
-        return try await call("\(API_PRICE_URL)api/v1/cryptos", ttl: 12 * 60 * 60) { result in
-            var dict = Set<String>()
+        let cryptos: [CryptoCodable] = try await call("\(API_PRICE_URL)api/v1/cryptos", ttl: 12 * 60 * 60) { result in
             let filtered: [CryptoCodable] = result.compactMap { item -> CryptoCodable? in
                 guard item.logo != nil else { return nil }
                 guard item.deprecated != true else { return nil }
-                if dict.contains(item.asset) && uniqueAssets {
-                    return nil
-                } else {
-                    if uniqueAssets {
-                        dict.insert(item.asset)
-                    }
-                    var crypto = item
-                    crypto.logo = NSString(string: item.logo!).deletingPathExtension + ".png"
-                    return crypto
-                }
+                var crypto = item
+                crypto.logo = NSString(string: item.logo!).deletingPathExtension + ".png"
+                return crypto
             }
             return filtered
         }
+        
+        if uniqueAssets {
+            var dict = Set<String>()
+            return cryptos.filter { dict.insert($0.asset).inserted }
+        }
+        return cryptos
     }
     
     func prices(_ cryptoIds: [String], _ fiat: String) async throws -> [TickerCodable] {
@@ -46,7 +44,7 @@ actor ApiClient {
         
         for chunk in chunks {
             let url = "\(API_PRICE_URL)api/v1/prices/public?fiat=\(fiat)&cryptoIds=\(chunk.joined(separator: ","))"
-            let tickers: [TickerCodable] = try await self.call(url, ttl: 60)
+            let tickers: [TickerCodable] = try await call(url, ttl: 60)
             allTickers.append(contentsOf: tickers)
         }
         
@@ -106,31 +104,60 @@ actor ApiClient {
 
 struct ApiError: Error {}
 
-struct CryptoCodable: Codable {
+protocol CryptoDisplayable {
+    var logo: String? { get }
+    var image: UIImage? { get set }
+}
+
+struct CryptoCodable: Codable, CryptoDisplayable {
     let asset: String
     let _id: String
+    let type: String
     let name: String
     let symbol: String
     let deprecated: Bool
+    let platform: String
     var logo: String?
     
     enum CodingKeys: String, CodingKey {
         case asset
         case _id
+        case type
         case name
         case symbol
         case deprecated
+        case platform
         case logo
     }
     
     var image: UIImage?
-    var platform: CryptoPlatform?
+    var cryptoPlatform: CryptoPlatform?
     
-    static let bitcoin = CryptoCodable(asset: "bitcoin", _id: "bitcoin@bitcoin", name: "Bitcoin", symbol: "BTC", deprecated: false, image: UIImage(named: "Bitcoin"))
-    static let tether = CryptoCodable(asset: "tether", _id: "tether@ethereum", name: "Tether", symbol: "USDT", deprecated: false, image: UIImage(named: "Bitcoin"), platform: CryptoPlatform(name: "Ethereum", image: UIImage(named: "Ethereum")!))
+    static let bitcoin = CryptoCodable(asset: "bitcoin", _id: "bitcoin@bitcoin", type: "coin", name: "Bitcoin", symbol: "BTC", deprecated: false, platform: "bitcoin", image: UIImage(named: "Bitcoin"))
+    static let tether = CryptoCodable(asset: "tether", _id: "tether@ethereum", type: "token", name: "Tether", symbol: "USDT", deprecated: false, platform: "ethereum", image: UIImage(named: "Bitcoin"), cryptoPlatform: CryptoPlatform.ethereum)
     
     static func loadLogoData(_ cryptos: [CryptoCodable]) async -> [CryptoCodable] {
         var items = cryptos
+                
+        var dict = Set<String>()
+        let cryptoPlatforms: [CryptoPlatform] = cryptos.compactMap{ $0.cryptoPlatform }.filter { dict.insert($0.name).inserted }
+        
+        let platformImages = await self.loadImages(cryptoPlatforms)
+        let cryptoImages = await self.loadImages(items)
+        
+        for i in items.indices {
+            items[i].image = cryptoImages[i]
+            if let platformIndex = cryptoPlatforms.firstIndex(where: { $0.cryptoId == items[i].cryptoPlatform?.cryptoId }) {
+                items[i].cryptoPlatform!.image = platformImages[platformIndex]
+            }
+        }
+        return items
+    }
+    
+    static private func loadImages(_ items: [CryptoDisplayable]) async -> Array<UIImage?> {
+        if items.count == 0 {
+            return []
+        }
         var images = Array<UIImage?>(repeating: nil, count: items.count)
         await withTaskGroup(of: (Int, UIImage?).self) { group in
             for i in items.indices {
@@ -144,16 +171,17 @@ struct CryptoCodable: Codable {
                 images[index] = image
             }
         }
-        for i in items.indices {
-            items[i].image = images[i]
-        }
-        return items
+        return images
     }
 }
 
-struct CryptoPlatform {
+struct CryptoPlatform: CryptoDisplayable {
+    let cryptoId: String
     let name: String
-    let image: UIImage
+    var image: UIImage?
+    var logo: String?
+    
+    static let ethereum = CryptoPlatform(cryptoId: "ethereum@ethereum", name: "Ethereum", image: UIImage(named: "Ethereum"))
 }
 
 struct TickerCodable: Codable {

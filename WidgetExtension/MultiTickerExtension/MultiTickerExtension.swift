@@ -98,7 +98,7 @@ struct MultiTickerExtensionEntryView: View {
                                     .setFontStyle(WidgetFonts.textXs)
                                     .foregroundColor(WidgetColors.secondary)
                                 Spacer()
-                                PriceChangeView(ticker: ticker, suffix: "")
+                                PriceChangeView(ticker: ticker)
                             }
                         }
                     }

@@ -59,7 +59,8 @@ struct TickerExtensionEntryView: View {
                 HStack(alignment: .top) {
                     CryptoLogo(date: entry.date, size: 32.0, crypto: entry.configuration.crypto.image, animated: true)
                     Spacer()
-                    PriceChangeView(ticker: entry.ticker, suffix: family == .systemSmall ? "" : " (" + .localized("1 day") + ")")
+                    let suffix = family == .systemSmall ? "" : " (" + .localized("1 day") + ")"
+                    PriceChangeView(ticker: entry.ticker, suffix: suffix)
                 }
                 Spacer()
                 VStack(alignment: .leading, spacing: 0.0) {
