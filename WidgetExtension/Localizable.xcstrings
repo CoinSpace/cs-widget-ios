@@ -1,14 +1,7 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "" : {
-
-    },
-    "..." : {
-
-    },
     "1 day" : {
-      "extractionState" : "stale",
       "localizations" : {
         "bs" : {
           "stringUnit" : {
@@ -169,7 +162,6 @@
       }
     },
     "Crypto" : {
-      "extractionState" : "stale",
       "localizations" : {
         "bs" : {
           "stringUnit" : {
@@ -330,7 +322,6 @@
       }
     },
     "Cryptos" : {
-      "extractionState" : "stale",
       "localizations" : {
         "bs" : {
           "stringUnit" : {
@@ -491,7 +482,6 @@
       }
     },
     "Live price for selected crypto." : {
-      "extractionState" : "stale",
       "localizations" : {
         "bs" : {
           "stringUnit" : {
@@ -652,7 +642,6 @@
       }
     },
     "Live prices for multiple cryptos." : {
-      "extractionState" : "stale",
       "localizations" : {
         "bs" : {
           "stringUnit" : {
@@ -813,7 +802,6 @@
       }
     },
     "Local currency" : {
-      "extractionState" : "stale",
       "localizations" : {
         "bs" : {
           "stringUnit" : {
@@ -973,8 +961,17 @@
         }
       }
     },
+    "Multi Ticker" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Мульти-тикер"
+          }
+        }
+      }
+    },
     "Other cryptos" : {
-      "extractionState" : "stale",
       "localizations" : {
         "bs" : {
           "stringUnit" : {
@@ -1135,13 +1132,36 @@
       }
     },
     "Portfolio" : {
-
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Портфель"
+          }
+        }
+      }
     },
     "Sign In" : {
-
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Войти"
+          }
+        }
+      }
+    },
+    "The total value of your cryptos." : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Общая стоимость ваших криптовалют."
+          }
+        }
+      }
     },
     "Ticker" : {
-      "extractionState" : "stale",
       "localizations" : {
         "bs" : {
           "stringUnit" : {
@@ -1302,7 +1322,6 @@
       }
     },
     "Top cryptos" : {
-      "extractionState" : "stale",
       "localizations" : {
         "bs" : {
           "stringUnit" : {

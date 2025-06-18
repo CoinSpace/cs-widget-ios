@@ -122,7 +122,7 @@ struct PriceView: View {
         if let price = ticker?.price {
             text = Text(AppService.shared.formatFiat(price, currency.rawValue, customFractionDigits))
         } else {
-            text = Text("...")
+            text = Text(verbatim: "...")
         }
         return text
             .setFontStyle(fontStyle)
@@ -143,7 +143,7 @@ struct PriceChangeView: View {
             text = Text(String(format: "%+.2f%%", priceChange) + suffix)
                 .foregroundColor(priceChange >= 0 ? WidgetColors.primary : WidgetColors.danger)
         } else {
-            text = Text("...")
+            text = Text(verbatim: "...")
         }
         return text
             .setFontStyle(colorScheme == .light ? WidgetFonts.textXs : WidgetFonts.textXsBold)

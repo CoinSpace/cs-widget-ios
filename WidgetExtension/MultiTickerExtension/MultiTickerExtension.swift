@@ -111,7 +111,7 @@ struct MultiTickerExtensionEntryView: View {
             .padding()
             
             Button(intent: Reload()) {
-                Text("").frame(maxWidth: .infinity, maxHeight: .infinity)
+                Text(verbatim: "").frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .buttonStyle(OverlayButton())
         }

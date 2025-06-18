@@ -17,7 +17,7 @@ actor ApiClient {
     private var prices: [String: Double] = [:]
     
     func cryptos(uniqueAssets: Bool = true) async throws -> [CryptoCodable] {
-        let cryptos: [CryptoCodable] = try await call("\(API_PRICE_URL)api/v1/cryptos", ttl: 12 * 60 * 60) { result in
+        let cryptos: [CryptoCodable] = try await self.call("\(API_PRICE_URL)api/v1/cryptos", ttl: 12 * 60 * 60) { result in
             let filtered: [CryptoCodable] = result.compactMap { item -> CryptoCodable? in
                 guard item.logo != nil else { return nil }
                 guard item.deprecated != true else { return nil }
@@ -44,7 +44,7 @@ actor ApiClient {
         
         for chunk in chunks {
             let url = "\(API_PRICE_URL)api/v1/prices/public?fiat=\(fiat)&cryptoIds=\(chunk.joined(separator: ","))"
-            let tickers: [TickerCodable] = try await call(url, ttl: 60)
+            let tickers: [TickerCodable] = try await self.call(url, ttl: 60)
             allTickers.append(contentsOf: tickers)
         }
         
@@ -136,22 +136,20 @@ struct CryptoCodable: Codable, CryptoDisplayable {
     static let bitcoin = CryptoCodable(asset: "bitcoin", _id: "bitcoin@bitcoin", type: "coin", name: "Bitcoin", symbol: "BTC", deprecated: false, platform: "bitcoin", image: UIImage(named: "Bitcoin"))
     static let tether = CryptoCodable(asset: "tether", _id: "tether@ethereum", type: "token", name: "Tether", symbol: "USDT", deprecated: false, platform: "ethereum", image: UIImage(named: "Bitcoin"), cryptoPlatform: CryptoPlatform.ethereum)
     
-    static func loadLogoData(_ cryptos: [CryptoCodable]) async -> [CryptoCodable] {
-        var items = cryptos
-                
+    static func loadLogoData(_ cryptos: inout [CryptoCodable]) async -> [CryptoCodable] {
         var dict = Set<String>()
         let cryptoPlatforms: [CryptoPlatform] = cryptos.compactMap{ $0.cryptoPlatform }.filter { dict.insert($0.name).inserted }
         
         let platformImages = await self.loadImages(cryptoPlatforms)
-        let cryptoImages = await self.loadImages(items)
+        let cryptoImages = await self.loadImages(cryptos)
         
-        for i in items.indices {
-            items[i].image = cryptoImages[i]
-            if let platformIndex = cryptoPlatforms.firstIndex(where: { $0.cryptoId == items[i].cryptoPlatform?.cryptoId }) {
-                items[i].cryptoPlatform!.image = platformImages[platformIndex]
+        for i in cryptos.indices {
+            cryptos[i].image = cryptoImages[i]
+            if let platformIndex = cryptoPlatforms.firstIndex(where: { $0.cryptoId == cryptos[i].cryptoPlatform?.cryptoId }) {
+                cryptos[i].cryptoPlatform!.image = platformImages[platformIndex]
             }
         }
-        return items
+        return cryptos
     }
     
     static private func loadImages(_ items: [CryptoDisplayable]) async -> Array<UIImage?> {

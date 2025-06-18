@@ -98,13 +98,13 @@ struct PortfolioExtensionEntryView: View {
             .padding()
 
             Button(intent: Reload()) {
-                Text("").frame(maxWidth: .infinity, maxHeight: .infinity)
+                Text(verbatim: "").frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .buttonStyle(OverlayButton())
 
             let size = entry.portfolio == nil ? .infinity : 64
             Link(destination: URL(string: "coinspace://")!) {
-                Text("")
+                Text(verbatim: "")
                     .frame(maxWidth: size, maxHeight: size)
                     .opacity(0)
             }

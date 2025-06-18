@@ -47,7 +47,7 @@ struct CryptoEntity: AppEntity {
 struct CryptoQuery: EntityStringQuery {
     func entities(for identifiers: [String]) async throws -> [CryptoEntity] {
         var cryptos = try await ApiClient.shared.cryptos().filter { identifiers.contains($0.asset) }
-        cryptos = await CryptoCodable.loadLogoData(cryptos)
+        cryptos = await CryptoCodable.loadLogoData(&cryptos)
         return cryptos.map(CryptoEntity.fromCryptoCodable)
     }
    
@@ -72,7 +72,7 @@ struct CryptoQuery: EntityStringQuery {
     
     func topCryptos(_ size: Int) async throws -> [CryptoEntity]? {
         var cryptos = Array(try await ApiClient.shared.cryptos().prefix(size))
-        cryptos = await CryptoCodable.loadLogoData(cryptos)
+        cryptos = await CryptoCodable.loadLogoData(&cryptos)
         return cryptos.map(CryptoEntity.fromCryptoCodable)
     }
     
@@ -83,7 +83,7 @@ struct CryptoQuery: EntityStringQuery {
         }
         let allCryptos = try await ApiClient.shared.cryptos()
         var cryptos = Array((search.isEmpty ? allCryptos : allCryptos.filter { "\($0.name) \($0.symbol)".localizedCaseInsensitiveContains(needle) }).prefix(10))
-        cryptos = await CryptoCodable.loadLogoData(cryptos)
+        cryptos = await CryptoCodable.loadLogoData(&cryptos)
         
         return IntentItemCollection(sections: [
             IntentItemSection(title, items: cryptos.map(CryptoEntity.fromCryptoCodable))

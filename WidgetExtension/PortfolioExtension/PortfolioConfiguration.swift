@@ -49,18 +49,25 @@ struct PortfolioConfiguration: WidgetConfigurationIntent {
                 }
             }
         } catch {}
-        
+                
         var tickers: [TickerCodable] = []
         do {
             let cryptoIds = cryptos.map { $0._id }
             tickers = try await ApiClient.shared.prices(cryptoIds, self.currency.rawValue)
         } catch {}
+        
+        let totalTicker = self.getTotalTicker(portfolioCryptos, tickers)
+        let items = await self.getPortfolioCryptos(portfolioCryptos, tickers, &cryptos, allCryptos, rows)
 
+        return Portfolio(total: totalTicker, cryptos: items)
+    }
+    
+    private func getTotalTicker(_ portfolioCryptos: [PortfolioCryptoCodable], _ tickers: [TickerCodable]) -> TickerCodable {
         var balance = 0.0
         var balanceChange = 0.0
-        for (index, portfolioCrypto) in portfolioCryptos.enumerated() {
+        for (index, crypto) in portfolioCryptos.enumerated() {
             let ticker = tickers[index]
-            let fiat = portfolioCrypto.balance * ticker.price
+            let fiat = crypto.balance * ticker.price
             balance += fiat
             balanceChange += fiat * (ticker.price_change_1d ?? 0)
         }
@@ -77,7 +84,10 @@ struct PortfolioConfiguration: WidgetConfigurationIntent {
         if let encoded = try? JSONEncoder().encode(totalTicker) {
             defaults.set(encoded, forKey: key)
         }
-        
+        return totalTicker
+    }
+    
+    private func getPortfolioCryptos(_ portfolioCryptos: [PortfolioCryptoCodable], _ tickers: [TickerCodable], _ cryptos: inout [CryptoCodable], _ allCryptos: [CryptoCodable], _ rows: Int) async -> [PortfolioCrypto] {
         if cryptos.count > rows {
             cryptos.removeSubrange(rows..<cryptos.count)
         }
@@ -86,7 +96,7 @@ struct PortfolioConfiguration: WidgetConfigurationIntent {
                 cryptos[i].cryptoPlatform = CryptoPlatform(cryptoId: platform._id ,name: platform.name, logo: platform.logo)
             }
         }
-        cryptos = await CryptoCodable.loadLogoData(cryptos)
+        cryptos = await CryptoCodable.loadLogoData(&cryptos)
 
         let items: [PortfolioCrypto] = cryptos.enumerated().map { index, crypto in
             let ticker = tickers[index]
@@ -95,8 +105,7 @@ struct PortfolioConfiguration: WidgetConfigurationIntent {
             let amount: CryptoAmount = CryptoAmount(value: portfolioCrypto.balance, fiat: fiat)
             return PortfolioCrypto(crypto: crypto, ticker: ticker, amount: amount)
         }
-
-        return Portfolio(total: totalTicker, cryptos: items)
+        return items
     }
 }
 
