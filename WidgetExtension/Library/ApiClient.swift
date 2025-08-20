@@ -17,7 +17,7 @@ actor ApiClient {
     private var prices: [String: Double] = [:]
     
     func cryptos(uniqueAssets: Bool = true) async throws -> [CryptoCodable] {
-        let cryptos: [CryptoCodable] = try await self.call("\(API_PRICE_URL)api/v1/cryptos", ttl: 12 * 60 * 60) { result in
+        let cryptos: [CryptoCodable] = try await self.call("\(API_PRICE_URL)api/v1/cryptos", ttl: 12.0 * 60 * 60) { result in
             let filtered: [CryptoCodable] = result.compactMap { item -> CryptoCodable? in
                 guard item.logo != nil else { return nil }
                 guard item.deprecated != true else { return nil }
