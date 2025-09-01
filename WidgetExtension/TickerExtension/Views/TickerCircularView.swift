@@ -11,7 +11,7 @@ struct TickerCircularView: View {
                 Text(entry.configuration.crypto.symbol)
                     .setFontStyle(WidgetFonts.textXsBold)
                     .minimumScaleFactor(0.9)
-                PriceText
+                PriceChangeText
                     .setFontStyle(WidgetFonts.textXsBold)
                     .minimumScaleFactor(0.7)
             }.padding(.horizontal, 2)
@@ -22,7 +22,7 @@ struct TickerCircularView: View {
         }
     }
     
-    private var PriceText: Text {
+    private var PriceChangeText: Text {
         let text: Text
         if let priceChange = entry.ticker?.price_change_1d {
             text = Text(String(format: "%+.1f%%", priceChange))

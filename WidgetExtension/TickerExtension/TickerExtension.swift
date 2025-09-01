@@ -54,7 +54,7 @@ struct TickerExtensionEntryView: View {
     var body: some View {
         switch family {
         case .systemSmall, .systemMedium:
-            TickerSmallMediumEntryView(entry: entry)
+            TickerSmallMediumView(entry: entry)
         case .accessoryRectangular:
             TickerRectangularView(entry: entry)
         case .accessoryCircular:

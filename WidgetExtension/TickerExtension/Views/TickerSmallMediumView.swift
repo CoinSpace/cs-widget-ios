@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct TickerSmallMediumEntryView: View {
+struct TickerSmallMediumView: View {
     var entry: TickerProvider.Entry
     
     @Environment(\.widgetFamily) var family
