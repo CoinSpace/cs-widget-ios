@@ -50,42 +50,19 @@ struct TickerExtensionEntryView: View {
     var entry: TickerProvider.Entry
     
     @Environment(\.widgetFamily) var family
-    @Environment(\.colorScheme) var colorScheme
-    @Environment(\.widgetContentMargins) var widgetContentMargins
-        
+    
     var body: some View {
-        ZStack() {
-            VStack() {
-                HStack(alignment: .top) {
-                    CryptoLogo(date: entry.date, size: 32.0, crypto: entry.configuration.crypto.image, animated: true)
-                    Spacer()
-                    let suffix = family == .systemSmall ? "" : " (" + .localized("1 day") + ")"
-                    PriceChangeView(ticker: entry.ticker, suffix: suffix)
-                }
-                Spacer()
-                VStack(alignment: .leading, spacing: 0.0) {
-                    Text(entry.configuration.crypto.name)
-                        .setFontStyle(WidgetFonts.textMd)
-                        .foregroundColor(WidgetColors.secondary)
-                    
-                    PriceView(
-                        ticker: entry.ticker,
-                        date: entry.date,
-                        currency: entry.configuration.currency,
-                        fontStyle: family == .systemSmall ? WidgetFonts.textMdBold : WidgetFonts.text2XlBold
-                    )
-                }
-                .frame(
-                    maxWidth: .infinity,
-                    alignment: .topLeading
-                )
-            }
-            .padding()
-            
-            Button(intent: Reload()) {
-                Text(verbatim: "").frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
-            .buttonStyle(OverlayButton())
+        switch family {
+        case .systemSmall, .systemMedium:
+            TickerSmallMediumEntryView(entry: entry)
+        case .accessoryRectangular:
+            TickerRectangularView(entry: entry)
+        case .accessoryCircular:
+            TickerCircularView(entry: entry)
+        case .accessoryInline:
+            TickerInlineView(entry: entry)
+        default:
+            Text(verbatim: "404")
         }
     }
 }
@@ -103,7 +80,13 @@ struct TickerExtension: Widget {
         }
         .configurationDisplayName("Ticker")
         .description("Live price for selected crypto.")
-        .supportedFamilies([.systemSmall, .systemMedium])
+        .supportedFamilies([
+            .systemSmall,
+            .systemMedium,
+            .accessoryRectangular,
+            .accessoryCircular,
+            .accessoryInline,
+        ])
         .contentMarginsDisabled()
     }
 }

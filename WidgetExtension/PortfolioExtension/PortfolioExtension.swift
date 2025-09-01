@@ -43,8 +43,6 @@ struct PortfolioExtensionEntryView: View {
     var entry: PortfolioProvider.Entry
 
     @Environment(\.widgetFamily) var family
-    @Environment(\.colorScheme) var colorScheme
-    @Environment(\.widgetContentMargins) var widgetContentMargins
 
     var body: some View {
         ZStack {

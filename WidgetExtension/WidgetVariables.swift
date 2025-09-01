@@ -40,10 +40,12 @@ struct WidgetColors {
 }
 
 struct OverlayButton: ButtonStyle {
+    var animate: Bool = true
+    
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .background(.black)
-            .opacity(configuration.isPressed ? 0.4 : 0)
+            .opacity(configuration.isPressed && animate ? 0.4 : 0)
             .animation(.easeOut(duration: 0.3), value: configuration.isPressed)
     }
 }

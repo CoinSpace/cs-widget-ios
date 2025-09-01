@@ -68,8 +68,6 @@ struct MultiTickerExtensionEntryView: View {
     var entry: MultiTickerProvider.Entry
     
     @Environment(\.widgetFamily) var family
-    @Environment(\.colorScheme) var colorScheme
-    @Environment(\.widgetContentMargins) var widgetContentMargins
         
     var body: some View {
         ZStack() {
