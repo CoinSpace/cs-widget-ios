@@ -5,7 +5,7 @@ struct PortfolioInlineView: View {
     
     var body: some View {
         ZStack {
-            Image("CoinWallet")
+            Image("coinwallet.symbol")
             if entry.portfolio != nil {
                 if let price = entry.portfolio?.total.price {
                     Text(verbatim: "\(AppService.shared.formatFiat(price, entry.configuration.currency.rawValue, false))")
