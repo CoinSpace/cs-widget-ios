@@ -43,7 +43,7 @@ actor ApiClient {
         var allTickers: [TickerCodable] = []
         
         for chunk in chunks {
-            let url = "\(API_PRICE_URL)api/v1/prices/public?fiat=\(fiat)&cryptoIds=\(chunk.joined(separator: ","))"
+            let url = "\(API_PRICE_URL)api/v1/public/prices?fiat=\(fiat)&cryptoIds=\(chunk.joined(separator: ","))"
             let tickers: [TickerCodable] = try await self.call(url, ttl: 60)
             allTickers.append(contentsOf: tickers)
         }
