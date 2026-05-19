@@ -157,10 +157,10 @@ struct CryptoCodable: Codable, CryptoDisplayable {
             return []
         }
         var images = Array<UIImage?>(repeating: nil, count: items.count)
+        let version = Bundle.main.infoDictionary!["CFBundleShortVersionString"]!
         await withTaskGroup(of: (Int, UIImage?).self) { group in
             for i in items.indices {
-                group.addTask {
-                    let version = Bundle.main.infoDictionary!["CFBundleShortVersionString"]!
+                group.addTask {                    
                     let image = await AppService.shared.downloadImage(url: "https://price.coin.space/logo/\(items[i].logo!)?ver=\(version)")
                     return (i, image)
                 }
